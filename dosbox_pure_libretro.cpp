@@ -3852,13 +3852,17 @@ bool retro_unserialize(const void *data, size_t size)
 	return true;
 }
 
+void retro_deinit(void)
+{
+	for (DBP_Buffer& buf : dbp_buffers) { if (buf.video) { free(buf.video); buf.video = NULL; } }
+}
+
 // Unused features
 void *retro_get_memory_data(unsigned id) { (void)id; return NULL; }
 size_t retro_get_memory_size(unsigned id) { (void)id; return 0; }
 void retro_cheat_reset(void) { }
 void retro_cheat_set(unsigned index, bool enabled, const char *code) { (void)index; (void)enabled; (void)code; }
 bool retro_load_game_special(unsigned type, const struct retro_game_info *info, size_t num) { return false; }
-void retro_deinit(void) { }
 
 // UTF8 fopen
 #include <sys/stat.h>
@@ -3948,10 +3952,10 @@ bool fpath_nocase(std::string& pathstr, bool* out_is_dir)
 	{
 		#endif
 		// Prefix with directory of content path
-		const char *content = dbp_content_path.c_str(), *content_fs = strrchr(content, '/'), *content_bs = strrchr(content, '\\');
-		const char* content_dir_end = ((content_fs || content_bs) ? (content_fs > content_bs ? content_fs : content_bs) + 1 : content + dbp_content_path.length());
-		if (content_dir_end != content)
+		const char *content = dbp_content_path.c_str(), *content_fs = strrchr(content, '/'), *content_bs = strrchr(content, '\\'), *content_dir_end = content; bool content_is_dir;
+		if (content_fs || content_bs || (*content && (!exists_utf8(content, &content_is_dir) || content_is_dir)))
 		{
+			content_dir_end = ((content_fs || content_bs) ? (content_fs > content_bs ? content_fs : content_bs) + 1 : content + dbp_content_path.length());
 			pathstr.insert(0, content, (content_dir_end - content));
 			if (!content_fs && !content_bs) pathstr.insert(((content_dir_end++) - content), 1, CROSS_FILESPLIT);
 		}
