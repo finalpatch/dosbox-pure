@@ -969,6 +969,9 @@ void DOSBOX_Init(void) {
 	Pint->Set_help("Limit free conventional memory (default to all available, specified in kilobytes < 640)");
 #endif
 
+	Pbool = secprop->Add_bool("dos idle api",Property::Changeable::OnlyAtStart,true);
+	Pbool->Set_help("Lower host CPU usage when supported DOS programs signal that they are idle.");
+
 	secprop->AddInitFunction(&DOS_KeyboardLayout_Init,true);
 	Pstring = secprop->Add_string("keyboardlayout",Property::Changeable::WhenIdle, "auto");
 	Pstring->Set_help("Language code of the keyboard layout (or none).");

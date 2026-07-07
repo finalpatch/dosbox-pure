@@ -19,9 +19,16 @@
 
 #include "dos_inc.h"
 #include "../ints/int10.h"
+#include "callback.h"
+#include "control.h"
+#include "dosbox.h"
+#include "regs.h"
+#include "setup.h"
 #include <string.h>
 
 #define NUMBER_ANSI_DATA 10
+
+extern bool DBP_IsShuttingDown();
 
 class device_CON : public DOS_Device {
 public:
@@ -60,7 +67,24 @@ bool device_CON::Read(Bit8u * data,Bit16u * size) {
 		readcache=0;
 	}
 	while (*size>count) {
-		reg_ah=(IS_EGAVGA_ARCH)?0x10:0x0;
+		const Bit8u int16_poll_function=(IS_EGAVGA_ARCH)?0x11:0x1;
+		const Bit8u int16_read_function=(IS_EGAVGA_ARCH)?0x10:0x0;
+
+		if (((Section_prop*)control->GetSection("dos"))->Get_bool("dos idle api")) {
+			while (true) {
+				if (DBP_IsShuttingDown()) {
+					*size=count;
+					reg_ax=oldax;
+					return true;
+				}
+				reg_ah=int16_poll_function;
+				CALLBACK_RunRealInt(0x16);
+				if (!GETFLAG(ZF)) break;
+				CALLBACK_RunRealInt(0x28);
+			}
+		}
+
+		reg_ah=int16_read_function;
 		CALLBACK_RunRealInt(0x16);
 		switch(reg_al) {
 		case 13:

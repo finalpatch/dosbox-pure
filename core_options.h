@@ -81,6 +81,7 @@ namespace DBP_Option
 		cycles_max,
 		cycles_scale,
 		cycle_limit,
+		idle_api,
 		perfstats,
 		// Video
 		machine,
@@ -594,6 +595,19 @@ static retro_core_option_v2_definition option_defs[DBP_Option::_OPTIONS_TOTAL] =
 			//{ "1.01", "101%" }, { "1.02", "102%" }, { "1.1", "110%" }, { "1.2", "120%" } 
 		},
 		"1.0",
+	},
+	{
+		"dosbox_pure_idle_api",
+		"Advanced > DOS Idle API",
+		NULL,
+		"Reduce host CPU usage when DOS programs or console input wait loops signal that they are idle.",
+		NULL,
+		DBP_OptionCat::Performance,
+		{
+			{ "true", "On" },
+			{ "false", "Off" },
+		},
+		"true",
 	},
 	{
 		"dosbox_pure_perfstats",

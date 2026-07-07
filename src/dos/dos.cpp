@@ -1301,7 +1301,10 @@ public:
 		callback[4].Install(DOS_27Handler,CB_IRET,"DOS Int 27");
 		callback[4].Set_RealVec(0x27);
 
-		callback[5].Install(NULL,CB_IRET,"DOS Int 28");
+		if (configuration && static_cast<Section_prop*>(configuration)->Get_bool("dos idle api"))
+			callback[5].Install(NULL,CB_INT28,"DOS idle");
+		else
+			callback[5].Install(NULL,CB_IRET,"DOS Int 28");
 		callback[5].Set_RealVec(0x28);
 
 		callback[6].Install(NULL,CB_INT29,"CON Output Int 29");

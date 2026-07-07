@@ -58,6 +58,7 @@ static retro_system_av_info av_info;
 
 // DOSBOX STATE
 static enum DBP_State : Bit8u { DBPSTATE_BOOT, DBPSTATE_EXITED, DBPSTATE_SHUTDOWN, DBPSTATE_REBOOT, DBPSTATE_FIRST_FRAME, DBPSTATE_RUNNING } dbp_state;
+static bool dbp_shutdown_requested;
 static enum DBP_SerializeMode : Bit8u { DBPSERIALIZE_STATES, DBPSERIALIZE_REWIND, DBPSERIALIZE_DISABLED } dbp_serializemode;
 static bool dbp_game_running, dbp_pause_events, dbp_paused_midframe, dbp_frame_pending, dbp_biosreboot, dbp_biospoweroff, dbp_system_cached, dbp_system_scannable, dbp_refresh_memmaps;
 static bool dbp_optionsupdatecallback, dbp_reboot_set64mem, dbp_use_network, dbp_had_game_running, dbp_strict_mode, dbp_legacy_save, dbp_wasloaded, dbp_skip_c_mount;
@@ -593,6 +594,7 @@ static void DBP_ThreadControl(DBP_ThreadCtlMode m)
 			dbp_frame_pending = true;
 			goto case_TCM_EMULATION_CONTINUES;
 		case TCM_SHUTDOWN:
+			dbp_shutdown_requested = true;
 			if (dbp_frame_pending)
 			{
 				dbp_pause_events = true;
@@ -1343,7 +1345,7 @@ bool DBP_IsKeyDown(KBD_KEYS key)
 
 bool DBP_IsShuttingDown()
 {
-	return (!first_shell || first_shell->exit);
+	return (dbp_shutdown_requested || !first_shell || first_shell->exit);
 }
 
 bool DBP_GetRetroMidiInterface(retro_midi_interface* res)
@@ -2348,6 +2350,7 @@ static bool check_variables()
 	DBP_Option::Apply(sec_dos, "xms", (mem_use_extended ? "true" : "false"), true);
 	DBP_Option::Apply(sec_dos, "ems", (mem_use_extended ? "true" : "false"), true);
 	DBP_Option::Apply(sec_dosbox, "memsize", (mem_use_extended ? mem : "16"), false, true, mem_changed);
+	DBP_Option::GetAndApply(sec_dos, "dos idle api", DBP_Option::idle_api, false, true);
 
 	bool audiorate_changed = false;
 	#ifndef DBP_STANDALONE
@@ -2879,6 +2882,7 @@ static void init_dosbox(bool forcemenu = false, bool reinit = false, const std::
 		if (!newcontent) dbp_image_index = (active_disk_image_index >= dbp_images.size() ? 0 : active_disk_image_index);
 	}
 	dbp_biosreboot = dbp_biospoweroff = dbp_reboot_set64mem = false;
+	dbp_shutdown_requested = false;
 	dbp_wasloaded = true;
 	DBP_ReportCoreMemoryMaps();
 

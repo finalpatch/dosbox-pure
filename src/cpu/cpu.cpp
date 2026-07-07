@@ -2169,6 +2169,12 @@ bool CPU_CPUID(void) {
 }
 
 static Bits HLT_Decode(void) {
+	extern bool DBP_IsShuttingDown();
+	if (DBP_IsShuttingDown()) {
+		cpudecoder=cpu.hlt.old_decoder;
+		return -1;
+	}
+
 	/* Once an interrupt occurs, it should change cpu core */
 	if (reg_eip!=cpu.hlt.eip || SegValue(cs) != cpu.hlt.cs) {
 		cpudecoder=cpu.hlt.old_decoder;
@@ -2180,6 +2186,13 @@ static Bits HLT_Decode(void) {
 }
 
 void CPU_HLT(Bitu oldeip) {
+	extern bool DBP_IsShuttingDown();
+	if (DBP_IsShuttingDown()) {
+		CPU_IODelayRemoved += CPU_Cycles;
+		CPU_Cycles=0;
+		return;
+	}
+
 	reg_eip=oldeip;
 	CPU_IODelayRemoved += CPU_Cycles;
 	CPU_Cycles=0;

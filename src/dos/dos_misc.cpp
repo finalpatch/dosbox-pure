@@ -22,6 +22,9 @@
 #include "mem.h"
 #include "regs.h"
 #include "dos_inc.h"
+#include "cpu.h"
+#include "control.h"
+#include "setup.h"
 #include <list>
 
 
@@ -55,6 +58,8 @@ static Bitu INT2F_Handler(void) {
 static Bitu INT2A_Handler(void) {
 	return CBRET_NONE;
 }
+
+extern bool DBP_IsShuttingDown();
 
 static bool DOS_MultiplexFunctions(void) {
 	switch (reg_ax) {
@@ -182,7 +187,11 @@ static bool DOS_MultiplexFunctions(void) {
 		else if (reg_bx == 0x18) return true;	// idle callout
 		else return false;
 	case 0x1680:	/*  RELEASE CURRENT VIRTUAL MACHINE TIME-SLICE */
-		//TODO Maybe do some idling but could screw up other systems :)
+		if (!DBP_IsShuttingDown() && ((Section_prop*)control->GetSection("dos"))->Get_bool("dos idle api")) {
+			CPU_STI();
+			CPU_HLT(reg_eip);
+			reg_al = 0;
+		}
 		return true; //So no warning in the debugger anymore
 	case 0x1689:	/*  Kernel IDLE CALL */
 	case 0x168f:	/*  Close awareness crap */
