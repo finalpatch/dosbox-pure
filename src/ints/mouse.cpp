@@ -133,10 +133,6 @@ static Bit8u mouse_vmware_cursor;
 static bool mouse_vmware_updated;
 bool mouse_vmware_usep60;
 
-extern int dbp_mouse_max_x_override;
-extern int dbp_mouse_max_y_override;
-
-
 bool Mouse_SetPS2State(bool use) {
 	if (use && (!ps2callbackinit)) {
 		useps2callback = false;
@@ -505,13 +501,8 @@ void Mouse_CursorMoved(float xrel,float yrel,float x,float y,bool emulate) {
 			mouse.y = y*(IS_EGAVGA_ARCH?(real_readb(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1):25)*8;
 		} else if ((mouse.max_x < 2048) || (mouse.max_y < 2048) || (mouse.max_x != mouse.max_y)) {
 			if ((mouse.max_x > 0) && (mouse.max_y > 0)) {
-                if (dbp_mouse_max_x_override > 0 && dbp_mouse_max_y_override > 0) {
-                    mouse.x = x*dbp_mouse_max_x_override;
-                    mouse.y = y*dbp_mouse_max_y_override;
-                } else {
-                    mouse.x = x*mouse.max_x;
-                    mouse.y = y*mouse.max_y;
-                }
+				mouse.x = x*mouse.max_x;
+				mouse.y = y*mouse.max_y;
 			} else {
 #ifdef C_DBP_LIBRETRO // DBP: use same speed for emulate true and false
 				mouse.x += dx;
@@ -1049,20 +1040,17 @@ static Bitu INT33_Handler(void) {
 		{
 			LOG(LOG_MOUSE,LOG_WARN)("Loading driver state...");
 			PhysPt src = SegPhys(es)+reg_dx;
-            // DBP: The saved buffer is a raw copy of the whole mouse
-            // struct, which also contains internal IRQ-delivery bookkeeping.
-            // Those must stay in sync with the live MOUSE_Limit_Events PIC
-            // event, which is not part of the saved state.
-            bool  cur_timer  = mouse.timer_in_progress;
-            bool  cur_in_UIR = mouse.in_UIR;
-            Bit8u cur_events = mouse.events;
-            button_event cur_queue[QUEUE_SIZE];
-            memcpy(cur_queue, mouse.event_queue, sizeof(cur_queue));
+			// DBP: The saved buffer is a raw copy of the whole mouse struct, which also contains internal IRQ-delivery bookkeeping.
+			//      Those must stay in sync with the live MOUSE_Limit_Events PIC event, which is not part of the saved state.
+			bool cur_timer = mouse.timer_in_progress, cur_in_UIR = mouse.in_UIR;
+			Bit8u cur_events = mouse.events;
+			button_event cur_queue[QUEUE_SIZE];
+			memcpy(cur_queue, mouse.event_queue, sizeof(cur_queue));
 			MEM_BlockRead(src, &mouse, sizeof(mouse));
-            mouse.timer_in_progress = cur_timer;
-            mouse.in_UIR = cur_in_UIR;
-            mouse.events = cur_events;
-            memcpy(mouse.event_queue, cur_queue, sizeof(cur_queue));
+			mouse.timer_in_progress = cur_timer;
+			mouse.in_UIR = cur_in_UIR;
+			mouse.events = cur_events;
+			memcpy(mouse.event_queue, cur_queue, sizeof(cur_queue));
 		}
 		break;
 	case 0x1a:	/* Set mouse sensitivity */
