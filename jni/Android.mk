@@ -19,12 +19,14 @@
 LOCAL_PATH := $(call my-dir)
 CORE_DIR   := $(LOCAL_PATH)/..
 
-SOURCES := \
+SOURCES_ABS := \
 	$(CORE_DIR)/*.cpp       \
 	$(CORE_DIR)/src/*.cpp   \
 	$(CORE_DIR)/src/*/*.cpp \
 	$(CORE_DIR)/src/*/*/*.cpp
-SOURCES := $(wildcard $(SOURCES))
+
+SOURCES := $(wildcard $(SOURCES_ABS))
+SOURCES := $(patsubst $(LOCAL_PATH)/%,%,$(SOURCES))
 
   LDFLAGS := 
 
@@ -47,8 +49,8 @@ else ifeq ($(BUILD),ASAN)
 else
   BUILD    := RELEASE
   BUILDDIR := release
-  CFLAGS   := -DNDEBUG -O2 -fno-ident
-  LDFLAGS  += -O2
+  CFLAGS   := -DNDEBUG -O2 -fno-ident -flto
+  LDFLAGS  += -O2 -flto
 endif
 
 CFLAGS  += $(CPUFLAGS) -std=c++11 -fpic -fomit-frame-pointer -fexceptions -Wno-address-of-packed-member -Wno-format -Wno-switch
