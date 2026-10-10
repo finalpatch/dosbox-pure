@@ -133,6 +133,11 @@ static Bit8u mouse_vmware_cursor;
 static bool mouse_vmware_updated;
 bool mouse_vmware_usep60;
 
+#ifdef C_DBP_LIBRETRO
+extern int dbp_mouse_max_x_override;
+extern int dbp_mouse_max_y_override;
+#endif
+
 bool Mouse_SetPS2State(bool use) {
 	if (use && (!ps2callbackinit)) {
 		useps2callback = false;
@@ -501,8 +506,13 @@ void Mouse_CursorMoved(float xrel,float yrel,float x,float y,bool emulate) {
 			mouse.y = y*(IS_EGAVGA_ARCH?(real_readb(BIOSMEM_SEG,BIOSMEM_NB_ROWS)+1):25)*8;
 		} else if ((mouse.max_x < 2048) || (mouse.max_y < 2048) || (mouse.max_x != mouse.max_y)) {
 			if ((mouse.max_x > 0) && (mouse.max_y > 0)) {
+#ifdef C_DBP_LIBRETRO
+				mouse.x = x*(dbp_mouse_max_x_override > 0 ? dbp_mouse_max_x_override : mouse.max_x);
+				mouse.y = y*(dbp_mouse_max_y_override > 0 ? dbp_mouse_max_y_override : mouse.max_y);
+#else
 				mouse.x = x*mouse.max_x;
 				mouse.y = y*mouse.max_y;
+#endif
 			} else {
 #ifdef C_DBP_LIBRETRO // DBP: use same speed for emulate true and false
 				mouse.x += dx;
